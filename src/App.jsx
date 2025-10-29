@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
+  redirect,
 } from "react-router-dom";
 import "./App.css";
 import Home from "./components/Home";
@@ -15,14 +16,20 @@ async function protectedLoader() {
     await checkAuth();
     return null; // Authentication successful
   } catch (error) {
-    return Navigate({ to: "/login", replace: true });
+    // Use redirect instead of Navigate component
+    return redirect("/login");
   }
 }
+
+// Root component that wraps the protected route
+const ProtectedRoute = () => {
+  return <Home />;
+};
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: <ProtectedRoute />,
     loader: protectedLoader,
   },
   {

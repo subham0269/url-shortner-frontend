@@ -13,8 +13,8 @@ import { checkAuth } from "./utils/auth";
 // Loader function for protected routes
 async function protectedLoader() {
   try {
-    await checkAuth();
-    return null; // Authentication successful
+    const userData = await checkAuth();
+    return userData.data; // Return user data from the authentication check
   } catch (error) {
     // Use redirect instead of Navigate component
     return redirect("/login");

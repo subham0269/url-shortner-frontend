@@ -18,9 +18,11 @@
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+  color: black;
 }
 
 .url-form input[type="url"] {
+  box-sizing: border-box;
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -34,6 +36,7 @@
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  color: black;
 }
 
 .url-item {

@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const baseUrl = import.meta.env.VITE_SERVER_BASEURL;
+const baseUrl = "https://vertex-zus-last-restoration.trycloudflare.com";
+console.log(baseUrl);
 const axiosInstance = axios.create({
   baseURL: `${baseUrl}/api`,
   withCredentials: true, // This enables sending cookies

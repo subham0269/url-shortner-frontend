@@ -1,20 +1,25 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import axiosInstance from "../utils/axiosConfig";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { login, clearError } from "../redux/slices/authSlice";
 import "./Auth.css";
 
 const Login = () => {
-  const location = useLocation();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     email: "",
     password: "",
   });
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState(
-    location.state?.message || ""
-  );
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isLoading, error, isAuthenticated } = useSelector(
+    (state) => state.auth,
+  );
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,29 +31,14 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    try {
-      await axiosInstance.post("/auth/login", formData);
-      navigate("/");
-    } catch (error) {
-      setError(
-        error.response?.data?.message || "Login failed. Please try again."
-      );
-      console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(clearError());
+    dispatch(login(formData));
   };
 
   return (
     <div className="auth-container">
       <h2>Login</h2>
       {error && <div className="error-message">{error}</div>}
-      {successMessage && (
-        <div className="success-message">{successMessage}</div>
-      )}
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
           <label htmlFor="email">Email:</label>

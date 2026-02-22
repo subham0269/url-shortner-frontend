@@ -10,6 +10,23 @@
   border-radius: 8px;
   margin-bottom: 2rem;
   color: dimgrey;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.logout-button:hover {
+  background-color: #c82333;
 }
 
 .url-form {
@@ -60,6 +77,11 @@
   text-decoration: underline;
 }
 
+.url-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .copy-button {
   background-color: #28a745;
   color: white;
@@ -72,6 +94,25 @@
 
 .copy-button:hover {
   background-color: #218838;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.delete-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .error-message {

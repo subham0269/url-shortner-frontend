@@ -1,16 +1,25 @@
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import axiosInstance from "../utils/axiosConfig";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchUserUrls,
+  shortenUrl,
+  deleteUrl,
+  clearError,
+  clearSuccessMessage,
+} from "../redux/slices/urlSlice";
+import { logout } from "../redux/slices/authSlice";
 import "./Home.css";
 
 const Home = () => {
   const navigate = useNavigate();
   const userData = useLoaderData();
+  const dispatch = useDispatch();
   const [longUrl, setLongUrl] = useState("");
-  const [urls, setUrls] = useState([]);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { urls, isLoading, error, successMessage } = useSelector(
+    (state) => state.urls,
+  );
+  const authUser = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     if (userData?.redirect) {
@@ -19,52 +28,73 @@ const Home = () => {
     }
 
     // Load existing shortened URLs
-    fetchUserUrls();
-  }, [userData, navigate]);
+    dispatch(fetchUserUrls());
+  }, [userData, navigate, dispatch]);
 
-  const fetchUserUrls = async () => {
-    try {
-      const response = await axiosInstance.get("/urls/user");
-      setUrls(response.data);
-    } catch (error) {
-      console.error("Error fetching URLs:", error);
+  // Auto-clear messages after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        dispatch(clearSuccessMessage());
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [successMessage, dispatch]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, dispatch]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsLoading(true);
-
-    try {
-      const response = await axiosInstance.post("/urls/shorten", { longUrl });
-      setUrls((prevUrls) => [response.data, ...prevUrls]);
-      setLongUrl("");
-      setSuccess("URL shortened successfully!");
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to shorten URL");
-    } finally {
-      setIsLoading(false);
-    }
+    dispatch(clearError());
+    dispatch(shortenUrl(longUrl));
+    setLongUrl("");
   };
 
   const copyToClipboard = async (shortUrl) => {
     try {
       await navigator.clipboard.writeText(shortUrl);
-      setSuccess("URL copied to clipboard!");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err) {
-      setError("Failed to copy URL");
-      setTimeout(() => setError(""), 3000);
+      dispatch(clearSuccessMessage());
+      // We could add a separate notification state for copy action
+      setTimeout(() => {
+        alert("URL copied to clipboard!");
+      }, 100);
+    } catch (e) {
+      // eslint-disable-line no-unused-vars
+      alert("Failed to copy URL");
     }
   };
+
+  const handleDeleteUrl = (urlId) => {
+    if (window.confirm("Are you sure you want to delete this shortened URL?")) {
+      dispatch(deleteUrl(urlId));
+    }
+  };
+
+  const handleLogout = async () => {
+    dispatch(logout()).then(() => {
+      navigate("/login");
+    });
+  };
+
+  const displayUser = authUser || userData;
 
   return (
     <div className="home-container">
       <div className="user-info">
-        <h2>Welcome, {userData?.fullName}!</h2>
-        <p>Email: {userData?.emailId}</p>
+        <div>
+          <h2>Welcome, {displayUser?.fullName || "User"}!</h2>
+          <p>Email: {displayUser?.emailId || displayUser?.email}</p>
+        </div>
+        <button className="logout-button" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
 
       <div className="url-form">
@@ -83,7 +113,9 @@ const Home = () => {
           </button>
         </form>
         {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
+        {successMessage && (
+          <div className="success-message">{successMessage}</div>
+        )}
       </div>
 
       <div className="url-list">
@@ -104,12 +136,21 @@ const Home = () => {
                   Shortened: {url.shortUrl}
                 </a>
               </div>
-              <button
-                className="copy-button"
-                onClick={() => copyToClipboard(url.shortUrl)}
-              >
-                Copy
-              </button>
+              <div className="url-actions">
+                <button
+                  className="copy-button"
+                  onClick={() => copyToClipboard(url.shortUrl)}
+                >
+                  Copy
+                </button>
+                <button
+                  className="delete-button"
+                  onClick={() => handleDeleteUrl(url.id)}
+                  disabled={isLoading}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))
         )}

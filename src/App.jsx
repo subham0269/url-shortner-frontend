@@ -8,18 +8,22 @@ import "./App.css";
 import Home from "./components/Home";
 import Login from "./components/Login";
 import Signup from "./components/Signup";
-import { checkAuth } from "./utils/auth";
+import store from "./redux/store";
+import { verifyAuth } from "./redux/slices/authSlice";
 
-// Loader function for protected routes
-async function protectedLoader() {
+// Loader factory that takes store and returns loader function
+const createProtectedLoader = (reduxStore) => async () => {
   try {
-    const userData = await checkAuth();
-    return userData.data; // Return user data from the authentication check
-  } catch (error) {
-    // Use redirect instead of Navigate component
+    const action = await reduxStore.dispatch(verifyAuth());
+    if (action.type === verifyAuth.fulfilled.type) {
+      return action.payload; // Return user data from the authentication check
+    }
+  } catch (e) {
+    // eslint-disable-line no-unused-vars
     return redirect("/login");
   }
-}
+  return redirect("/login");
+};
 
 // Root component that wraps the protected route
 const ProtectedRoute = () => {
@@ -30,7 +34,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <ProtectedRoute />,
-    loader: protectedLoader,
+    loader: createProtectedLoader(store),
   },
   {
     path: "/login",

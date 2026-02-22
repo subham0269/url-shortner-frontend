@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosConfig";
+import { useDispatch, useSelector } from "react-redux";
+import { signup, clearError } from "../redux/slices/authSlice";
 import "./Auth.css";
 
 const Signup = () => {
@@ -10,9 +11,12 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isLoading, error, successMessage } = useSelector(
+    (state) => state.auth,
+  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,21 +24,22 @@ const Signup = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user starts typing again
-    setError("");
+    // Clear errors when user starts typing again
+    setValidationError("");
+    dispatch(clearError());
   };
 
   const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setValidationError("Passwords do not match");
       return false;
     }
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long");
+      setValidationError("Password must be at least 6 characters long");
       return false;
     }
     if (!formData.fullName.trim()) {
-      setError("Full name is required");
+      setValidationError("Full name is required");
       return false;
     }
     return true;
@@ -47,30 +52,27 @@ const Signup = () => {
       return;
     }
 
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const { confirmPassword, ...signupData } = formData;
-      await axiosInstance.post("/auth/signup", signupData);
-      navigate("/login", {
-        state: { message: "Registration successful! Please log in." },
-      });
-    } catch (error) {
-      setError(
-        error.response?.data?.message ||
-          "Registration failed. Please try again."
-      );
-      console.error("Signup error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    const { confirmPassword: _, ...signupData } = formData;
+    dispatch(signup(signupData)).then((action) => {
+      if (action.type === signup.fulfilled.type) {
+        setTimeout(() => {
+          navigate("/login", {
+            state: { message: "Registration successful! Please log in." },
+          });
+        }, 500);
+      }
+    });
   };
 
   return (
     <div className="auth-container">
       <h2>Sign Up</h2>
-      {error && <div className="error-message">{error}</div>}
+      {(error || validationError) && (
+        <div className="error-message">{error || validationError}</div>
+      )}
+      {successMessage && (
+        <div className="success-message">{successMessage}</div>
+      )}
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
           <label htmlFor="fullName">Full Name:</label>
